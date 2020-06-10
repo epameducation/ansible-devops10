@@ -1,0 +1,14 @@
+- name: Basic| Install firewalld
+  yum:
+      name: firewalld
+      state: latest
+  tags:
+      - firewall
+
+- name: Basic| Start & enable Firewalld
+  systemd:
+      name: firewalld
+      state: restarted
+      enabled: yes
+  tags:
+      - firewall

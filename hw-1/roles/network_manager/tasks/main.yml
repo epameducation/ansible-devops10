@@ -1,0 +1,14 @@
+---
+- name: Network Manager| Modify grub options
+  lineinfile:
+    path: /etc/default/grub
+    regex: '{{ item.regex }}'
+    line: '{{ item.line }}'
+    state: '{{ item.state }}'
+    backrefs: '{{ item.backrefs }}'
+  loop:
+    - {'regex': '(^GRUB_CMDLINE_LINUX)="(.+)"', 'line': '\1="\2 net.ifnames=0"', 'state': 'present', backrefs: 'yes'}
+    - {'regex': '(^GRUB_CMDLINE_LINUX)="(.+)"', 'line': '\1="\2 biosdevname=0"', 'state': 'present', backrefs: 'yes'}
+
+- name: Network Manager| Apply modifications
+  command: grub2-mkconfig

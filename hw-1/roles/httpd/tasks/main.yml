@@ -1,0 +1,55 @@
+- name: httpd| Open firewall ports
+  firewalld:
+      port: "{{item.port}}/{{item.type}}"
+      permanent: "{{item.permanent}}"
+      state: "{{item.state}}"
+      immediate: yes
+  loop:
+      - { port: "80", type: "tcp", permanent: "yes", state: "enabled" }
+      - { port: "443", type: "tcp", permanent: "yes", state: "enabled" }
+  tags:
+      - firewall
+
+- name: httpd| Install apache web server
+  yum:
+      name: httpd
+      state: latest
+  tags:
+      - httpd
+      - httpd_install
+
+- name: httpd| Add index.html page
+  blockinfile:
+      path: /var/www/html/index.html
+      create: yes
+      block: "{{ static_page }}"
+      marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
+  tags:
+      - httpd
+      - httpd_index
+
+- name: httpd| Add httpd to enabled services
+  systemd:
+      name: httpd
+      daemon-reload: yes
+      state: restarted
+      enabled: yes
+  tags:
+      - httpd
+      - httpd_systemd
+
+- name: httpd| Collect service facts
+  service_facts:
+  tags:
+      - httpd
+      - httpd_facts
+
+- name: httpd| Check if service started
+  fail:
+      msg: "http service is not running! Please, check it..."
+  tags:
+      - httpd
+      - httpd_facts
+  when: ansible_facts.services["httpd.service"] is not defined
+
+
