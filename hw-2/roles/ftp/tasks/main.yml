@@ -1,0 +1,60 @@
+- name: ftp| Add user for anonymous files
+  user:
+      name: "{{ ftp_anonymous_access_user }}"
+      shell: /bin/bash
+      home: /var/ftp
+  when: ftp_anonymous_access_user | default('ftp') != "ftp"
+
+- name: ftp| Install vsftpd
+  yum:
+      name: vsftpd
+      state: latest
+
+- name: ftp| Copy vsftpd config
+  template:
+      src: vsftpd.conf
+      dest: /etc/vsftpd/vsftpd.conf
+      force: yes
+
+- name: ftp| Selinux. Boolean
+  seboolean:
+      name: ftpd_anon_write
+      state: yes
+      persistent: yes
+  when: ansible_selinux.status == "enabled"
+
+- name: ftp| Selinux. Context
+  sefcontext:
+      target: '/var/ftp/pub(/.*)?'
+      setype: public_content_rw_t
+      state: present
+  when: ansible_selinux.status == "enabled"
+
+- name: ftp| Apply new SELinux file context to filesystem
+  command: restorecon -F -R -v /var/ftp/pub
+  when: ansible_selinux.status == "enabled"
+
+- name: ftp| Change owner of public directory
+  file:
+      path: /var/ftp/pub
+      owner: "{{ ftp_anonymous_access_user }}"
+      group: "{{ ftp_anonymous_access_user }}"
+      recurse: yes
+      force: yes
+
+- name: ftp| Firewall. Open ports
+  firewalld:
+      port: "{{item.port}}/{{item.type}}"
+      permanent: "{{item.permanent}}"
+      state: "{{item.state}}"
+      immediate: yes
+  loop:
+      - { port: "20", type: "tcp", permanent: "yes", state: "enabled" }
+      - { port: "21", type: "tcp", permanent: "yes", state: "enabled" }
+
+- name: ftp| Add vsftpd to autostart
+  systemd:
+      name: vsftpd
+      daemon-reload: yes
+      state: restarted
+      enabled: yes

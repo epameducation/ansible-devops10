@@ -1,0 +1,10 @@
+- name: mariadb| Detect node for mariadb
+  stat:
+      path: /tmp/database
+  register: db
+
+- name: mariadb| Install Mariadb
+  yum:
+      name: mariadb-server
+      state: latest
+  when: db.stat.exists

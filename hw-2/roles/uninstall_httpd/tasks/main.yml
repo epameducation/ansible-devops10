@@ -1,0 +1,20 @@
+- name: uninstall_httpd| Uninstall httpd
+  yum:
+      name: httpd
+      state: absent
+
+- name: uninstall_httpd| Close firewall ports for httpd
+  firewalld:
+      port: "{{item.port}}/{{item.type}}"
+      permanent: "{{item.permanent}}"
+      state: "{{item.state}}"
+      immediate: yes
+  loop:
+      - { port: "80", type: "tcp", permanent: "yes", state: "disabled" }
+      - { port: "443", type: "tcp", permanent: "yes", state: "disabled" }
+
+- name: uninstall_httpd| Delete static web page
+  file:
+      path: /var/www/html/index.html
+      state: absent
+

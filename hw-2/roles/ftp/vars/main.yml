@@ -1,0 +1,10 @@
+anon_mkdir_write_enable:
+anon_upload_enable:
+anonymous_enable:
+chown_uploads:
+ftp_anonymous_access_user: ftp
+download_enable:
+local_enable:
+listen_ipv4:
+listen_ipv6:
+write_enable:
