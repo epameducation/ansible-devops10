@@ -1,0 +1,8 @@
+{% for port in Listen %}
+<VirtualHost *:{{ port }}>
+    ServerName {{ ansible_fqdn }}
+    DocumentRoot /var/www/{{ ansible_fqdn }}/public_html
+    ErrorLog /var/www/{{ ansible_fqdn }}/error.log
+    CustomLog /var/www/{{ ansible_fqdn }}/requests.log combined
+</VirtualHost>
+{% endfor %}

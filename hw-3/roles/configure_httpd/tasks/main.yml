@@ -1,0 +1,36 @@
+- name: httpd| Check if httpd is installed
+  package_facts:
+    manager: auto
+  no_log: True
+    
+- name: httpd| Install httpd
+  yum:
+    name: httpd
+    state: latest
+  when: "'httpd' not in ansible_facts.packages"
+  
+- name: httpd| Create document root
+  file:
+    path: "/var/www/{{ ansible_fqdn }}/public_html"
+    state: directory
+    mode: '0755'
+    owner: apache
+    group: apache
+
+- name: httpd| configure vhost
+  template:
+    src: hw-3.j2
+    dest: "/etc/httpd/conf.d/{{ ansible_fqdn }}.conf"
+    force: yes
+  notify:
+    - restart httpd
+    
+- name: httpd| Open firewall ports
+  firewalld:
+      port: "{{ item }}/tcp"
+      permanent: "yes"
+      state: "enabled"
+      immediate: yes
+  with_items:
+      - "{{ Listen }}"
+    
