@@ -1,0 +1,76 @@
+---
+- hosts: all
+  vars: 
+    firewall: firewalld
+    remote_dir: /etc/ansible/facts.d
+    facts_file: custom.fact
+
+  tasks:
+    - name: create remote directory
+      file:
+        state: directory
+        recurse: yes
+        path: "{{ remote_dir }}"
+
+    - name: install new facts
+      copy:
+        src: "{{ facts_file }}"
+        dest: "{{ remote_dir }}"
+        force: yes
+
+    - name: install the firewall
+      yum:
+        name: "{{ firewall }}"
+        state: latest
+
+    - name: start the firewall
+      service:
+        name: "{{ firewall }}"
+        state: started
+        enabled: true
+
+
+- hosts: lamp
+  tasks:
+    - name: include the variable file
+      include_vars: hw-vars/allvars.yml
+
+    - name: include the tasks
+      include: hw-tasks/lamp.yml
+
+    - name: open the port for the web server
+      firewalld:
+        service: http
+        state: enabled
+        immediate: true
+        permanent: true
+
+    - name: create index.html
+      copy:
+        content: "{{ ansible_fqdn }}({{ ansible_default_ipv4.address }}) managed by Ansible\n"
+        dest: "{{ web_root }}/index.html"
+        force: yes
+
+- hosts: file
+  tasks:
+    - name: include the variabe file
+      include_vars: hw-vars/allvars.yml
+
+    - name: include the tasks
+      include: hw-tasks/file.yml
+
+    - name: open the port for the smb service
+      firewalld:
+        service: samba
+        state: enabled
+        immediate: true
+        permanent: true
+
+    - name: open the port for the ftp service
+      firewalld:
+        service: ftp
+        state: enabled
+        immediate: true
+        permanent: true
+
+
